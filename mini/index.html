@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Music Player</title>
+
+<style>
+body {
+  font-family: Arial;
+  padding: 20px;
+  background: #f4f4f4;
+}
+
+h1, h2 {
+  text-align: center;
+}
+
+.controls {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+input, select {
+  padding: 8px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
+  gap: 15px;
+}
+
+.card {
+  background: white;
+  padding: 10px;
+  border-radius: 10px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.card:hover {
+  background: #ddd;
+}
+
+img {
+  width: 100%;
+  height: 120px;
+}
+
+#nowPlaying {
+  text-align: center;
+  font-weight: bold;
+}
+</style>
+
+</head>
+<body>
+
+<h1>🎵 Music Player</h1>
+
+<div class="controls">
+  <input type="text" id="search" placeholder="Search song...">
+
+  <select id="genreFilter">
+    <option value="">All Genres</option>
+    <option value="Pop">Pop</option>
+    <option value="Rock">Rock</option>
+  </select>
+
+  <select id="artistFilter">
+    <option value="">All Artists</option>
+  </select>
+</div>
+
+<div id="songList" class="grid"></div>
+
+<h2>🎧 Now Playing</h2>
+<div id="nowPlaying"></div>
+
+<h2>🕒 Recently Played</h2>
+<ul id="recent"></ul>
+
+<script>
+// TYPE DEFINITIONS (TS concept used)
+class Song {
+  constructor(id, title, artist, album, genre, duration) {
+    this.id = id;
+    this.title = title;
+    this.artist = artist;
+    this.album = album;
+    this.genre = genre;
+    this.duration = duration;
+    this.favorite = false;
+    this.playCount = 0;
+  }
+}
+
+// SAMPLE DATA
+let songs = [
+  new Song(1,"Shape of You","Ed Sheeran","Divide","Pop",4),
+  new Song(2,"Believer","Imagine Dragons","Evolve","Rock",3),
+  new Song(3,"Blinding Lights","The Weeknd","After Hours","Pop",4),
+  new Song(4,"Thunder","Imagine Dragons","Evolve","Rock",3)
+];
+
+let recentlyPlayed = [];
+
+// ELEMENTS
+const songList = document.getElementById("songList");
+const nowPlaying = document.getElementById("nowPlaying");
+const recentList = document.getElementById("recent");
+const searchInput = document.getElementById("search");
+const genreFilter = document.getElementById("genreFilter");
+const artistFilter = document.getElementById("artistFilter");
+
+// LOAD ARTISTS
+function loadArtists() {
+  let artists = [...new Set(songs.map(s => s.artist))];
+  artists.forEach(a => {
+    let option = document.createElement("option");
+    option.value = a;
+    option.textContent = a;
+    artistFilter.appendChild(option);
+  });
+}
+
+// RENDER SONGS
+function renderSongs(list) {
+  songList.innerHTML = "";
+  list.forEach(song => {
+    let card = document.createElement("div");
+    card.className = "card";
+
+    card.innerHTML = `
+      <img src="https://via.placeholder.com/150">
+      <h3>${song.title}</h3>
+      <p>${song.artist}</p>
+      <p>${song.genre}</p>
+    `;
+
+    card.onclick = () => playSong(song);
+    songList.appendChild(card);
+  });
+}
+
+// PLAY SONG
+function playSong(song) {
+  song.playCount++;
+
+  nowPlaying.innerText = "Now Playing: " + song.title + " - " + song.artist;
+
+  recentlyPlayed.unshift(song);
+  recentlyPlayed = recentlyPlayed.slice(0,5);
+
+  renderRecent();
+}
+
+// RECENTLY PLAYED
+function renderRecent() {
+  recentList.innerHTML = "";
+  recentlyPlayed.forEach(song => {
+    let li = document.createElement("li");
+    li.innerText = song.title + " - " + song.artist;
+    recentList.appendChild(li);
+  });
+}
+
+// FILTER GENRE
+function filterByGenre() {
+  let genre = genreFilter.value;
+  let filtered = genre ? songs.filter(s => s.genre === genre) : songs;
+  renderSongs(filtered);
+}
+
+// FILTER ARTIST
+function filterByArtist() {
+  let artist = artistFilter.value;
+  let filtered = artist ? songs.filter(s => s.artist === artist) : songs;
+  renderSongs(filtered);
+}
+
+// SEARCH
+function searchSongs() {
+  let text = searchInput.value.toLowerCase();
+  let filtered = songs.filter(s =>
+    s.title.toLowerCase().includes(text)
+  );
+  renderSongs(filtered);
+}
+
+// SORT (keyof concept)
+function sortBy(key) {
+  let sorted = [...songs].sort((a,b) =>
+    a[key] > b[key] ? 1 : -1
+  );
+  renderSongs(sorted);
+}
+
+// EVENTS
+genreFilter.onchange = filterByGenre;
+artistFilter.onchange = filterByArtist;
+searchInput.oninput = searchSongs;
+
+// INIT
+loadArtists();
+renderSongs(songs);
+
+</script>
+
+</body>
+</html>
